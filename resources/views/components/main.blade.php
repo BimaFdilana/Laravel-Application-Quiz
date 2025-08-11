@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="{{ asset('assets/fonts/ionicons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/styles.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.5.5/dist/sweetalert2.min.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    @stack('head')
     @stack('style')
 </head>
 
@@ -23,6 +24,7 @@
         @include('components.navbar')
         @yield('content')
     </div>
+    @stack('script')
     <script src="{{ asset('assets/bootstrap/js/bootstrap.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

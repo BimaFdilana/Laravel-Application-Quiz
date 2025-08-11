@@ -27,7 +27,7 @@ class QuizController extends Controller
             'time_limit' => 'required|integer',
             'level' => 'required|string',
             'questions' => 'required|array',
-            'questions.*.type' => 'required|in:multiple_choice,drag_drop',
+            'questions.*.type' => 'required|in:multiple_choice,drag_drop,puzzle',
             'questions.*.question_text' => 'required|string',
             'questions.*.image' => 'nullable|file|image',
 
@@ -39,6 +39,9 @@ class QuizController extends Controller
             'questions.*.drag_answers' => 'nullable|array',
             'questions.*.drag_answers.*.text' => 'nullable|string',
             'questions.*.drag_answers.*.image' => 'nullable|file|image',
+
+            'questions.*.puzzle_answers' => 'nullable|array',
+            'questions.*.puzzle_answers.*.image' => 'required_if:questions.*.type,puzzle|file|image',
         ]);
 
         $quiz = Quiz::create([
@@ -56,7 +59,6 @@ class QuizController extends Controller
                 'image_url' => isset($questionData['image']) ? $questionData['image']->store('questions', 'public') : null,
             ]);
 
-
             if ($questionData['type'] === 'multiple_choice' && !empty($questionData['answers'])) {
                 foreach ($questionData['answers'] as $answerData) {
                     $question->answers()->create([
@@ -73,6 +75,16 @@ class QuizController extends Controller
                         'is_correct' => 0,
                         'image_url' => isset($answerData['image']) ? $answerData['image']->store('answers', 'public') : null,
                         'order' => $order + 1,
+                    ]);
+                }
+            } elseif ($questionData['type'] === 'puzzle' && !empty($questionData['puzzle_answers'])) {
+                $correctIndex = $questionData['puzzle_correct_index'] ?? -1;
+                foreach ($questionData['puzzle_answers'] as $aIndex => $answerData) {
+                    $question->answers()->create([
+                        'answer_text' => null,
+                        'is_correct' => $aIndex == $correctIndex,
+                        'image_url' => isset($answerData['image']) ? $answerData['image']->store('answers', 'public') : null,
+                        'order' => 0,
                     ]);
                 }
             }
@@ -159,11 +171,10 @@ class QuizController extends Controller
             'level' => 'required',
             'questions' => 'required|array',
             'questions.*.id' => 'nullable|exists:questions,id',
-            'questions.*.type' => 'required|in:multiple_choice,drag_drop',
+            'questions.*.type' => 'required|in:multiple_choice,drag_drop,puzzle',
             'questions.*.question_text' => 'required|string',
             'questions.*.image' => 'nullable|file|image',
 
-            'questions.*.answers' => 'nullable|array',
             'questions.*.answers.*.id' => 'nullable|exists:answers,id',
             'questions.*.answers.*.answer_text' => 'nullable|string',
             'questions.*.answers.*.is_correct' => 'nullable|in:on',
@@ -173,6 +184,10 @@ class QuizController extends Controller
             'questions.*.drag_answers.*.id' => 'nullable|exists:answers,id',
             'questions.*.drag_answers.*.text' => 'nullable|string',
             'questions.*.drag_answers.*.image' => 'nullable|file|image',
+
+            'questions.*.puzzle_answers' => 'nullable|array',
+            'questions.*.puzzle_answers.*.id' => 'nullable|exists:answers,id',
+            'questions.*.puzzle_answers.*.image' => 'nullable|file|image',
         ]);
 
         $quiz = Quiz::findOrFail($quiz_id);
@@ -226,6 +241,18 @@ class QuizController extends Controller
                             'order' => $order + 1,
                         ],
                     );
+                }
+            } elseif ($questionData['type'] === 'puzzle' && !empty($questionData['puzzle_answers'])) {
+                foreach ($questionData['puzzle_answers'] as $answerData) {
+                    if (!is_array($answerData)) {
+                        continue;
+                    }
+                    $question->answers()->create([
+                        'answer_text' => null,
+                        'is_correct' => 0,
+                        'image_url' => isset($answerData['image']) ? $answerData['image']->store('answers', 'public') : null,
+                        'order' => 0,
+                    ]);
                 }
             }
         }
