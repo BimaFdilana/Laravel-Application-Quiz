@@ -22,6 +22,7 @@
                             method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
+                            {{-- Form utama (Judul, Level, Deskripsi) --}}
                             <div class="form-group mb-3">
                                 <label for="title">Judul Kuis</label>
                                 <input class="form-control" type="text" name="title" id="title"
@@ -59,6 +60,7 @@
 
                             <div id="questions-section">
                                 <h5 class="fw-bold mt-3">Soal</h5>
+                                {{-- PERULANGAN UNTUK MENAMPILKAN SOAL YANG SUDAH ADA --}}
                                 @foreach ($quiz->questions as $qIndex => $question)
                                     <div class="question-item border p-3 mb-3 rounded">
                                         <button type="button" class="btn-close float-end remove-question"
@@ -75,7 +77,8 @@
                                                 </option>
                                                 <option value="drag_drop"
                                                     @if ($question->type == 'drag_drop') selected @endif>Drag & Drop
-                                                    (Menyusun)</option>
+                                                    (Menyusun)
+                                                </option>
                                                 <option value="puzzle" @if ($question->type == 'puzzle') selected @endif>
                                                     Puzzle Potongan Hilang</option>
                                             </select>
@@ -92,10 +95,11 @@
                                                 <img src="{{ asset('storage/' . $question->image_url) }}"
                                                     class="img-thumbnail mt-2" width="100">
                                             @endif
-                                            <small class="form-text text-danger">Rekomendasi: 1280x720px, di bawah 200
+                                            <small class="form-text text-danger">Rekomendasi: maks. 1280x720px, di bawah 200
                                                 KB.</small>
                                         </div>
 
+                                        {{-- Opsi Jawaban Pilihan Ganda --}}
                                         <div class="multiple-choice-options"
                                             style="{{ $question->type !== 'multiple_choice' ? 'display: none;' : '' }}">
                                             @include('partials.edit_answers_mc', [
@@ -104,6 +108,7 @@
                                             ])
                                         </div>
 
+                                        {{-- Opsi Jawaban Drag & Drop --}}
                                         <div class="drag-drop-options"
                                             style="{{ $question->type !== 'drag_drop' ? 'display: none;' : '' }}">
                                             @include('partials.edit_answers_dragdrop', [
@@ -112,12 +117,13 @@
                                             ])
                                         </div>
 
+                                        {{-- Opsi Jawaban Puzzle (SEKARANG OTOMATIS) --}}
                                         <div class="puzzle-options"
                                             style="{{ $question->type !== 'puzzle' ? 'display: none;' : '' }}">
-                                            @include('partials.edit_answers_puzzle', [
-                                                'question' => $question,
-                                                'qIndex' => $qIndex,
-                                            ])
+                                            <div class="alert alert-info mt-3 p-2">
+                                                <p class="mb-0 small">✓ **Puzzle Otomatis**: Sistem akan memecah gambar
+                                                    utama menjadi 6 bagian dan memilih satu secara acak sebagai jawaban.</p>
+                                            </div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -135,6 +141,7 @@
         </div>
     </div>
 
+    {{-- TEMPLATE UNTUK SOAL BARU (SUDAH DISESUAIKAN) --}}
     <template id="question-template">
         <div class="question-item border p-3 mb-3 rounded">
             <button type="button" class="btn-close float-end remove-question" aria-label="Close"></button>
@@ -171,16 +178,16 @@
             </div>
 
             <div class="puzzle-options" style="display: none;">
-                <label>Gambar Pengecoh (Potongan yang salah)</label>
-                <div id="puzzle-answers-section-{index}" class="puzzle-answers-section"></div>
-                <button type="button" class="btn btn-secondary btn-sm add-puzzle-answer" data-question="{index}">Tambah
-                    Gambar Pengecoh</button>
+                <div class="alert alert-info mt-3 p-2">
+                    <p class="mb-0 small">✓ **Puzzle Otomatis**: Sistem akan memecah gambar utama menjadi 6 bagian dan
+                        memilih satu secara acak sebagai jawaban.</p>
+                </div>
             </div>
         </div>
     </template>
 
     <script>
-        // SCRIPT INI SAMA PERSIS DENGAN DI HALAMAN 'BUAT KUIS'
+        // SCRIPT INI SEKARANG JAUH LEBIH SEDERHANA
         let questionIndex = {{ $quiz->questions->count() }};
 
         document.querySelector('.add-question').addEventListener('click', function() {
@@ -192,24 +199,35 @@
         });
 
         document.addEventListener('click', function(event) {
+            // Logika untuk Pilihan Ganda (LENGKAP)
             if (event.target.classList.contains('add-answer')) {
                 const qIndex = event.target.dataset.question;
                 const section = document.getElementById(`answers-section-${qIndex}`);
                 const aIndex = section.children.length;
-                const item =
-                `<div class="answer-item d-flex align-items-center gap-2 mb-2">...</div>`;
+                const item = `<div class="answer-item d-flex align-items-center gap-2 mb-2">
+                                <input type="text" class="form-control" name="questions[${qIndex}][answers][${aIndex}][answer_text]" placeholder="Teks Jawaban">
+                                <input type="file" class="form-control" name="questions[${qIndex}][answers][${aIndex}][image]">
+                                <div class="form-check"><input type="checkbox" class="form-check-input" name="questions[${qIndex}][answers][${aIndex}][is_correct]"><label class="form-check-label">Benar</label></div>
+                                <button type="button" class="btn btn-danger btn-sm remove-item">Hapus</button>
+                              </div>`;
                 section.insertAdjacentHTML('beforeend', item);
             }
 
+            // Logika untuk Drag & Drop (LENGKAP)
             if (event.target.classList.contains('add-drag-answer')) {
                 const qIndex = event.target.dataset.question;
                 const section = document.getElementById(`drag-answers-section-${qIndex}`);
                 const aIndex = section.children.length;
-                const item =
-                `<div class="drag-answer-item d-flex align-items-center gap-2 mb-2">...</div>`;
+                const item = `<div class="drag-answer-item d-flex align-items-center gap-2 mb-2">
+                                <span class="fw-bold">${aIndex + 1}.</span>
+                                <input type="text" class="form-control" name="questions[${qIndex}][drag_answers][${aIndex}][text]" placeholder="Teks Potongan Jawaban">
+                                <input type="file" class="form-control" name="questions[${qIndex}][drag_answers][${aIndex}][image]">
+                                <button type="button" class="btn btn-danger btn-sm remove-item">Hapus</button>
+                              </div>`;
                 section.insertAdjacentHTML('beforeend', item);
             }
 
+            // Logika untuk Puzzle (LENGKAP)
             if (event.target.classList.contains('add-puzzle-answer')) {
                 const qIndex = event.target.dataset.question;
                 const section = document.getElementById(`puzzle-answers-section-${qIndex}`);
@@ -223,6 +241,7 @@
                 section.insertAdjacentHTML('beforeend', item);
             }
 
+            // Logika Hapus (LENGKAP)
             if (event.target.classList.contains('remove-item')) {
                 event.target.closest('.d-flex').remove();
             }
@@ -231,6 +250,7 @@
             }
         });
 
+        // Event listener untuk mengubah tampilan
         document.addEventListener('change', function(event) {
             if (event.target.classList.contains('question-type-select')) {
                 const selectedType = event.target.value;

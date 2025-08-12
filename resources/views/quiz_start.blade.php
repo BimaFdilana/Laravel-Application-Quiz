@@ -136,24 +136,28 @@
             const mainImageContainer = document.getElementById('main-image-container');
 
             answersContainer.innerHTML = "";
+            mainImageContainer.innerHTML = "";
             mainImageContainer.style.display = 'none';
 
             document.getElementById("quiz-title").innerText = `Soal ${currentQuestionIndex + 1} dari ${quizData.length}`;
             document.getElementById("question-text").innerText = question.question || '';
 
             if (question.type === 'puzzle') {
-                mainImageContainer.style.display = 'none';
                 displayPuzzleQuestion(question);
-            } else {
+            } else if (question.type === 'drag_drop') {
                 if (question.image) {
-                    document.getElementById("question-image").src = `{{ asset('storage') }}/${question.image}`;
+                    mainImageContainer.innerHTML =
+                        `<img id="question-image" class="rounded img-fluid shadow-sm" src="{{ asset('storage') }}/${question.image}" alt="Gambar Soal" style="max-height: 300px;">`;
                     mainImageContainer.style.display = 'flex';
                 }
-                if (question.type === 'drag_drop') {
-                    displayDragDropQuestion(question);
-                } else {
-                    displayMultipleChoiceQuestion(question);
+                displayDragDropQuestion(question);
+            } else {
+                if (question.image) {
+                    mainImageContainer.innerHTML =
+                        `<img id="question-image" class="rounded img-fluid shadow-sm" src="{{ asset('storage') }}/${question.image}" alt="Gambar Soal" style="max-height: 300px;">`;
+                    mainImageContainer.style.display = 'flex';
                 }
+                displayMultipleChoiceQuestion(question);
             }
             updateProgressBar();
         }
@@ -179,19 +183,24 @@
 
         function displayDragDropQuestion(question) {
             const shuffledAnswers = [...question.answers].sort(() => Math.random() - 0.5);
-            let targetsHtml = `
+            let targetsHtml =
+                `
                 <p class="text-center text-muted small">Susunlah urutan yang benar di bawah ini.</p>
-                <div id="drag-drop-targets" class="row g-2 justify-content-center">`;
+                <div id="drag-drop-targets" class="row g-2 justify-content-center align-items-stretch">`; // Tambah align-items-stretch
             for (let i = 0; i < question.answers.length; i++) {
                 targetsHtml +=
-                    `<div class="col-md-3 col-6"><div class="drop-target d-flex align-items-center justify-content-center"><small class="text-muted">Kotak ${i + 1}</small></div></div>`;
+                    `<div class="col-md-3 col-6 d-flex">
+                        <div class="drop-target d-flex align-items-center justify-content-center w-100">
+                            <small class="text-muted">Kotak ${i + 1}</small>
+                        </div>
+                     </div>`;
             }
             targetsHtml += `</div>`;
 
             let sourceHtml =
                 `<hr class="my-4"><p class="text-center fw-bold">Pilihan Jawaban</p><div id="drag-drop-source" class="drag-source">`;
             shuffledAnswers.forEach(answer => {
-                sourceHtml += `<div class="answer-card p-2 text-center d-flex flex-column justify-content-center" data-id="${answer.id}">
+                sourceHtml += `<div class="answer-card p-2 text-center d-flex flex-column justify-content-center" data-id="${answer.id}" style="min-height: 120px;">
                                 ${answer.image ? `<img src="{{ asset('storage') }}/${answer.image}" class="img-fluid rounded mb-2" style="max-height:60px;">` : ''}
                                 ${answer.text ? `<p class="mb-0 small fw-semibold">${answer.text}</p>` : ''}
                                </div>`;
@@ -202,10 +211,22 @@
                 `${targetsHtml}${sourceHtml}<div class="text-center mt-4"><button class="btn btn-primary" onclick="checkDragDropAnswer()">Periksa Jawaban</button></div>`;
 
             const sourceEl = document.getElementById('drag-drop-source');
-            document.querySelectorAll('.drop-target').forEach(target => new Sortable(target, {
-                group: 'shared-dnd',
-                animation: 150
-            }));
+            document.querySelectorAll('.drop-target').forEach(target => {
+                new Sortable(target, {
+                    group: 'shared-dnd',
+                    animation: 150,
+                    onAdd: function(evt) {
+                        const placeholder = evt.to.querySelector('small');
+                        if (placeholder) placeholder.style.display = 'none';
+                    },
+                    onRemove: function(evt) {
+                        if (evt.to.children.length === 0) {
+                            const placeholder = evt.to.querySelector('small');
+                            if (placeholder) placeholder.style.display = 'block';
+                        }
+                    }
+                });
+            });
             new Sortable(sourceEl, {
                 group: 'shared-dnd',
                 animation: 150
