@@ -22,7 +22,7 @@
                             method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
-                            {{-- Form utama (Judul, Level, Deskripsi) --}}
+
                             <div class="form-group mb-3">
                                 <label for="title">Judul Kuis</label>
                                 <input class="form-control" type="text" name="title" id="title"
@@ -60,7 +60,7 @@
 
                             <div id="questions-section">
                                 <h5 class="fw-bold mt-3">Soal</h5>
-                                {{-- PERULANGAN UNTUK MENAMPILKAN SOAL YANG SUDAH ADA --}}
+
                                 @foreach ($quiz->questions as $qIndex => $question)
                                     <div class="question-item border p-3 mb-3 rounded">
                                         <button type="button" class="btn-close float-end remove-question"
@@ -99,7 +99,7 @@
                                                 KB.</small>
                                         </div>
 
-                                        {{-- Opsi Jawaban Pilihan Ganda --}}
+
                                         <div class="multiple-choice-options"
                                             style="{{ $question->type !== 'multiple_choice' ? 'display: none;' : '' }}">
                                             @include('partials.edit_answers_mc', [
@@ -108,7 +108,7 @@
                                             ])
                                         </div>
 
-                                        {{-- Opsi Jawaban Drag & Drop --}}
+
                                         <div class="drag-drop-options"
                                             style="{{ $question->type !== 'drag_drop' ? 'display: none;' : '' }}">
                                             @include('partials.edit_answers_dragdrop', [
@@ -117,7 +117,7 @@
                                             ])
                                         </div>
 
-                                        {{-- Opsi Jawaban Puzzle (SEKARANG OTOMATIS) --}}
+
                                         <div class="puzzle-options"
                                             style="{{ $question->type !== 'puzzle' ? 'display: none;' : '' }}">
                                             <div class="alert alert-info mt-3 p-2">
@@ -141,7 +141,7 @@
         </div>
     </div>
 
-    {{-- TEMPLATE UNTUK SOAL BARU (SUDAH DISESUAIKAN) --}}
+
     <template id="question-template">
         <div class="question-item border p-3 mb-3 rounded">
             <button type="button" class="btn-close float-end remove-question" aria-label="Close"></button>
@@ -187,7 +187,7 @@
     </template>
 
     <script>
-        // SCRIPT INI SEKARANG JAUH LEBIH SEDERHANA
+
         let questionIndex = {{ $quiz->questions->count() }};
 
         document.querySelector('.add-question').addEventListener('click', function() {
@@ -199,7 +199,7 @@
         });
 
         document.addEventListener('click', function(event) {
-            // Logika untuk Pilihan Ganda (LENGKAP)
+
             if (event.target.classList.contains('add-answer')) {
                 const qIndex = event.target.dataset.question;
                 const section = document.getElementById(`answers-section-${qIndex}`);
@@ -213,7 +213,7 @@
                 section.insertAdjacentHTML('beforeend', item);
             }
 
-            // Logika untuk Drag & Drop (LENGKAP)
+
             if (event.target.classList.contains('add-drag-answer')) {
                 const qIndex = event.target.dataset.question;
                 const section = document.getElementById(`drag-answers-section-${qIndex}`);
@@ -227,7 +227,7 @@
                 section.insertAdjacentHTML('beforeend', item);
             }
 
-            // Logika untuk Puzzle (LENGKAP)
+
             if (event.target.classList.contains('add-puzzle-answer')) {
                 const qIndex = event.target.dataset.question;
                 const section = document.getElementById(`puzzle-answers-section-${qIndex}`);
@@ -241,7 +241,7 @@
                 section.insertAdjacentHTML('beforeend', item);
             }
 
-            // Logika Hapus (LENGKAP)
+
             if (event.target.classList.contains('remove-item')) {
                 event.target.closest('.d-flex').remove();
             }
@@ -250,7 +250,7 @@
             }
         });
 
-        // Event listener untuk mengubah tampilan
+
         document.addEventListener('change', function(event) {
             if (event.target.classList.contains('question-type-select')) {
                 const selectedType = event.target.value;
